@@ -509,6 +509,7 @@ contract ERC721AUpgradeable is
         uint256 quantity = tokenIds.length;
 
         for (uint256 i; i < quantity; i++) {
+            uint256 tokenId = tokenIds[i];
             TokenOwnership memory prevOwnership = ownershipOf(tokenId);
 
             _beforeTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
