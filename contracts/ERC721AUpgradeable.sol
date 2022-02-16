@@ -443,7 +443,7 @@ contract ERC721AUpgradeable is
      *
      * Emits a {Transfer} event.
      */
-    function _burn(address owner, uint256[] tokenIds) internal virtual {
+    function _burn(address owner, uint256[] memory tokenIds) internal virtual {
         uint256 quantity = tokenIds.length;
 
         for (uint256 i; i < quantity; i++) {
