@@ -46,8 +46,7 @@ contract ERC721AUpgradeable is
     ContextUpgradeable,
     ERC165Upgradeable,
     IERC721Upgradeable,
-    IERC721MetadataUpgradeable,
-    IERC721EnumerableUpgradeable
+    IERC721MetadataUpgradeable
 {
     using AddressUpgradeable for address;
     using StringsUpgradeable for uint256;
@@ -111,72 +110,12 @@ contract ERC721AUpgradeable is
     /**
      * @dev See {IERC721Enumerable-totalSupply}.
      */
-    function totalSupply() public view override returns (uint256) {
+    function totalSupply() public view returns (uint256) {
         // Counter underflow is impossible as _burnCounter cannot be incremented
         // more than _currentIndex times
         unchecked {
             return _currentIndex - _burnCounter;    
         }
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-tokenByIndex}.
-     * This read function is O(totalSupply). If calling from a separate contract, be sure to test gas first.
-     * It may also degrade with extremely large collection sizes (e.g >> 10000), test for your use case.
-     */
-    function tokenByIndex(uint256 index) public view override returns (uint256) {
-        uint256 numMintedSoFar = _currentIndex;
-        uint256 tokenIdsIdx;
-
-        // Counter overflow is impossible as the loop breaks when
-        // uint256 i is equal to another uint256 numMintedSoFar.
-        unchecked {
-            for (uint256 i; i < numMintedSoFar; i++) {
-                TokenOwnership memory ownership = _ownerships[i];
-                if (!ownership.burned) {
-                    if (tokenIdsIdx == index) {
-                        return i;
-                    }
-                    tokenIdsIdx++;
-                }
-            }
-        }
-        revert TokenIndexOutOfBounds();
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
-     * This read function is O(totalSupply). If calling from a separate contract, be sure to test gas first.
-     * It may also degrade with extremely large collection sizes (e.g >> 10000), test for your use case.
-     */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view override returns (uint256) {
-        if (index >= balanceOf(owner)) revert OwnerIndexOutOfBounds();
-        uint256 numMintedSoFar = _currentIndex;
-        uint256 tokenIdsIdx;
-        address currOwnershipAddr;
-
-        // Counter overflow is impossible as the loop breaks when
-        // uint256 i is equal to another uint256 numMintedSoFar.
-        unchecked {
-            for (uint256 i; i < numMintedSoFar; i++) {
-                TokenOwnership memory ownership = _ownerships[i];
-                if (ownership.burned) {
-                    continue;
-                }
-                if (ownership.addr != address(0)) {
-                    currOwnershipAddr = ownership.addr;
-                }
-                if (currOwnershipAddr == owner) {
-                    if (tokenIdsIdx == index) {
-                        return i;
-                    }
-                    tokenIdsIdx++;
-                }
-            }
-        }
-
-        // Execution should never reach this point.
-        revert();
     }
 
     /**
@@ -192,7 +131,6 @@ contract ERC721AUpgradeable is
         return
             interfaceId == type(IERC721Upgradeable).interfaceId ||
             interfaceId == type(IERC721MetadataUpgradeable).interfaceId ||
-            interfaceId == type(IERC721EnumerableUpgradeable).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
