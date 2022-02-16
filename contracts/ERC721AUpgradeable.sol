@@ -485,13 +485,9 @@ contract ERC721AUpgradeable is
             // If the ownership slot of tokenId+1 is not explicitly set, that means the transfer initiator owns it.
             // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
             uint256 nextTokenId = tokenId + 1;
-            if (_ownerships[nextTokenId].addr == address(0)) {
-                // This will suffice for checking _exists(nextTokenId),
-                // as a burned slot cannot contain the zero address.
-                if (nextTokenId < _currentIndex) {
-                    _ownerships[nextTokenId].addr = prevOwnership.addr;
-                    _ownerships[nextTokenId].startTimestamp = prevOwnership.startTimestamp;
-                }
+            if (_ownerships[nextTokenId].addr == address(0) && _exists(nextTokenId)) {
+                _ownerships[nextTokenId].addr = prevOwnership.addr;
+                _ownerships[nextTokenId].startTimestamp = prevOwnership.startTimestamp;
             }
         }
 
