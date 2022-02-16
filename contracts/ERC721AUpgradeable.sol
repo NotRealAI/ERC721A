@@ -509,45 +509,41 @@ contract ERC721AUpgradeable is
      *
      * Emits a {Transfer} event.
      */
-    function _burn(uint256 tokenId) internal virtual {
-        TokenOwnership memory prevOwnership = ownershipOf(tokenId);
+    function _burn(uint256[] tokenIds) internal virtual {
+        uint256 quantity = tokenIds.length;
 
-        _beforeTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
+        for (uint256 i; i < quantity; i++) {
+            TokenOwnership memory prevOwnership = ownershipOf(tokenId);
 
-        // Clear approvals from the previous owner
-        _approve(address(0), tokenId, prevOwnership.addr);
+            _beforeTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
 
-        // Underflow of the sender's balance is impossible because we check for
-        // ownership above and the recipient's balance can't realistically overflow.
-        // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
-        unchecked {
-            _addressData[prevOwnership.addr].balance -= 1;
-            _addressData[prevOwnership.addr].numberBurned += 1;
+            // Clear approvals from the previous owner
+            _approve(address(0), tokenId, prevOwnership.addr);
 
-            // Keep track of who burned the token, and the timestamp of burning.
-            _ownerships[tokenId].addr = prevOwnership.addr;
-            _ownerships[tokenId].startTimestamp = uint64(block.timestamp);
             _ownerships[tokenId].burned = true;
 
-            // If the ownership slot of tokenId+1 is not explicitly set, that means the burn initiator owns it.
-            // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
-            uint256 nextTokenId = tokenId + 1;
-            if (_ownerships[nextTokenId].addr == address(0)) {
-                // This will suffice for checking _exists(nextTokenId),
-                // as a burned slot cannot contain the zero address.
-                if (nextTokenId < _currentIndex) {
+            unchecked {
+                // If the ownership slot of tokenId+1 is not explicitly set, that means the burn initiator owns it.
+                // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
+                uint256 nextTokenId = tokenId + 1;
+                if (_ownerships[nextTokenId].addr == address(0) && _exists(nextTokenId)) {
                     _ownerships[nextTokenId].addr = prevOwnership.addr;
                     _ownerships[nextTokenId].startTimestamp = prevOwnership.startTimestamp;
                 }
             }
+
+            emit Transfer(prevOwnership.addr, address(0), tokenId);
+            _afterTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
         }
 
-        emit Transfer(prevOwnership.addr, address(0), tokenId);
-        _afterTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
-
+        // Underflow of the sender's balance is impossible because we check for
+        // ownership above and the recipient's balance can't realistically overflow.
+        // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
         // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
         unchecked { 
-            _burnCounter++;
+            _addressData[prevOwnership.addr].balance -= quantity;
+            _addressData[prevOwnership.addr].numberBurned += quantity;
+            _burnCounter += quantity;
         }
     }
 
