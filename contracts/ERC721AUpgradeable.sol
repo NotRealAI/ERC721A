@@ -505,17 +505,18 @@ contract ERC721AUpgradeable is
      *
      * Emits a {Transfer} event.
      */
-    function _burn(uint256[] tokenIds) internal virtual {
+    function _burn(address owner, uint256[] tokenIds) internal virtual {
         uint256 quantity = tokenIds.length;
 
         for (uint256 i; i < quantity; i++) {
             uint256 tokenId = tokenIds[i];
             TokenOwnership memory prevOwnership = ownershipOf(tokenId);
+            if (prevOwnership.addr != owner) revert TransferFromIncorrectOwner();
 
-            _beforeTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
+            _beforeTokenTransfers(owner, address(0), tokenId, 1);
 
             // Clear approvals from the previous owner
-            _approve(address(0), tokenId, prevOwnership.addr);
+            _approve(address(0), tokenId, owner);
 
             _ownerships[tokenId].burned = true;
 
@@ -524,13 +525,13 @@ contract ERC721AUpgradeable is
                 // Set the slot of tokenId+1 explicitly in storage to maintain correctness for ownerOf(tokenId+1) calls.
                 uint256 nextTokenId = tokenId + 1;
                 if (_ownerships[nextTokenId].addr == address(0) && _exists(nextTokenId)) {
-                    _ownerships[nextTokenId].addr = prevOwnership.addr;
+                    _ownerships[nextTokenId].addr = owner;
                     _ownerships[nextTokenId].startTimestamp = prevOwnership.startTimestamp;
                 }
             }
 
-            emit Transfer(prevOwnership.addr, address(0), tokenId);
-            _afterTokenTransfers(prevOwnership.addr, address(0), tokenId, 1);
+            emit Transfer(owner, address(0), tokenId);
+            _afterTokenTransfers(owner, address(0), tokenId, 1);
         }
 
         // Underflow of the sender's balance is impossible because we check for
@@ -538,8 +539,8 @@ contract ERC721AUpgradeable is
         // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
         // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
         unchecked { 
-            _addressData[prevOwnership.addr].balance -= quantity;
-            _addressData[prevOwnership.addr].numberBurned += quantity;
+            _addressData[owner].balance -= quantity;
+            _addressData[owner].numberBurned += quantity;
             _burnCounter += quantity;
         }
     }
