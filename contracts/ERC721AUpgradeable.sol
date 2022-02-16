@@ -477,9 +477,9 @@ contract ERC721AUpgradeable is
         // Counter overflow is incredibly unrealistic as tokenId would have to be 2**256.
         // Overflow not possible, as _burnCounter cannot be exceed _currentIndex times.
         unchecked { 
-            _addressData[owner].balance -= quantity;
-            _addressData[owner].numberBurned += quantity;
-            _burnCounter += quantity;
+            _addressData[owner].balance -= uint64(quantity);
+            _addressData[owner].numberBurned += uint64(quantity);
+            _burnCounter += uint64(quantity);
         }
     }
 
